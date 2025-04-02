@@ -5,6 +5,7 @@ import App from './App';
 // Lazy loading for route components
 const Dashboard = lazy(() => import('./features/dashboard/pages/Dashboard'));
 const Auth = lazy(() => import('./features/auth/pages/Auth'));
+const Home = lazy(() => import('./Home'));
 
 // Configuration routes
 const Roles = lazy(() => import('./features/configuracion/pages/Roles'));
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
     path: '/',
     element: <App />,
     children: [
+      {
+        index: true,
+        element: <Home />
+      },
       {
         path: 'dashboard',
         element: <Dashboard />
