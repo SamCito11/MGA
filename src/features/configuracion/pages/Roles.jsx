@@ -6,8 +6,13 @@ import { DetailModal } from "../../../shared/components/DetailModal"
 import { FormModal } from "../../../shared/components/FormModal"
 import { StatusButton } from "../../../shared/components/StatusButton"
 import { RolePrivilegeAssignment } from "../../../shared/components/RolePrivilegeAssignment"
-import { Button, Chip, Box } from "@mui/material"
-import { VpnKey as VpnKeyIcon } from "@mui/icons-material"
+import { RoleViewPermissionAssignment } from "../../../shared/components/RoleViewPermissionAssignment"
+import { Button, Chip, Box, Stack, Tooltip } from "@mui/material"
+import {
+  VpnKey as VpnKeyIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+} from "@mui/icons-material"
 
 const Roles = () => {
   // Simulamos obtener los privilegios desde algún servicio o API
@@ -32,6 +37,26 @@ const Roles = () => {
         { id: 3, nombre_privilegio: "Editar" },
         { id: 4, nombre_privilegio: "Eliminar" },
       ],
+      viewPermissions: [
+        "dashboard",
+        "servicios-musicales",
+        "servicios-musicales-profesores",
+        "servicios-musicales-programacion-profesores",
+        "servicios-musicales-cursos-matriculas",
+        "servicios-musicales-aulas",
+        "servicios-musicales-clases",
+        "venta-servicios",
+        "venta-servicios-clientes",
+        "venta-servicios-estudiantes",
+        "venta-servicios-venta-matriculas",
+        "venta-servicios-pagos",
+        "venta-servicios-programacion-clases",
+        "venta-servicios-asistencia",
+        "configuracion",
+        "configuracion-roles",
+        "configuracion-usuarios",
+        "configuracion-privilegios",
+      ],
     },
     {
       id: 2,
@@ -42,6 +67,14 @@ const Roles = () => {
       privileges: [
         { id: 1, nombre_privilegio: "Crear" },
         { id: 2, nombre_privilegio: "Ver" },
+      ],
+      viewPermissions: [
+        "dashboard",
+        "venta-servicios",
+        "venta-servicios-clientes",
+        "venta-servicios-estudiantes",
+        "venta-servicios-venta-matriculas",
+        "venta-servicios-pagos",
       ],
     },
     {
@@ -54,6 +87,12 @@ const Roles = () => {
         { id: 2, nombre_privilegio: "Ver" },
         { id: 3, nombre_privilegio: "Editar" },
       ],
+      viewPermissions: [
+        "dashboard",
+        "servicios-musicales-clases",
+        "venta-servicios-estudiantes",
+        "venta-servicios-asistencia",
+      ],
     },
     {
       id: 4,
@@ -62,6 +101,7 @@ const Roles = () => {
       fecha: "5/11/2024",
       estado: true,
       privileges: [{ id: 2, nombre_privilegio: "Ver" }],
+      viewPermissions: ["dashboard"],
     },
   ])
 
@@ -69,6 +109,7 @@ const Roles = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [privilegeAssignmentOpen, setPrivilegeAssignmentOpen] = useState(false)
+  const [viewPermissionAssignmentOpen, setViewPermissionAssignmentOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
 
   const handleCreate = () => {
@@ -116,6 +157,7 @@ const Roles = () => {
                 id: item.id,
                 fecha: item.fecha,
                 privileges: item.privileges || [],
+                viewPermissions: item.viewPermissions || [],
               }
             : item,
         ),
@@ -131,6 +173,7 @@ const Roles = () => {
           id: newId,
           fecha: today,
           privileges: [],
+          viewPermissions: [],
         },
       ])
     }
@@ -144,6 +187,11 @@ const Roles = () => {
   const handleAssignPrivileges = (role) => {
     setSelectedRole(role)
     setPrivilegeAssignmentOpen(true)
+  }
+
+  const handleAssignViewPermissions = (role) => {
+    setSelectedRole(role)
+    setViewPermissionAssignmentOpen(true)
   }
 
   const handleSavePrivilegeAssignment = (data) => {
@@ -166,6 +214,28 @@ const Roles = () => {
     )
   }
 
+  const handleSaveViewPermissionAssignment = (data) => {
+    const { roleId, viewPermissions } = data
+
+    // Actualizar el rol con los permisos de vista asignados
+    setRoles((prev) =>
+      prev.map((role) => {
+        if (role.id === roleId) {
+          return {
+            ...role,
+            viewPermissions,
+          }
+        }
+        return role
+      }),
+    )
+  }
+
+  const countViewPermissions = (role) => {
+    if (!role.viewPermissions) return 0
+    return role.viewPermissions.length
+  }
+
   const columns = [
     { id: "id", label: "ID" },
     { id: "nombre", label: "Nombre" },
@@ -185,6 +255,21 @@ const Roles = () => {
       ),
     },
     {
+      id: "viewPermissions",
+      label: "Vistas Permitidas",
+      render: (value) => (
+        <Chip
+          icon={
+            value && value.length > 0 ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />
+          }
+          label={value && value.length > 0 ? `${value.length} vistas` : "Sin acceso"}
+          size="small"
+          color={value && value.length > 0 ? "success" : "default"}
+          variant="outlined"
+        />
+      ),
+    },
+    {
       id: "estado",
       label: "Estado",
       render: (value, row) => <StatusButton active={value} onClick={() => handleToggleStatus(row.id)} />,
@@ -193,18 +278,36 @@ const Roles = () => {
       id: "actions",
       label: "Acciones",
       render: (_, row) => (
-        <Button
-          size="small"
-          startIcon={<VpnKeyIcon />}
-          onClick={() => handleAssignPrivileges(row)}
-          sx={{
-            borderRadius: "8px",
-            textTransform: "none",
-            fontWeight: 500,
-          }}
-        >
-          Asignar Privilegios
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Tooltip title="Asignar Privilegios">
+            <Button
+              size="small"
+              startIcon={<VpnKeyIcon />}
+              onClick={() => handleAssignPrivileges(row)}
+              sx={{
+                borderRadius: "8px",
+                textTransform: "none",
+                fontWeight: 500,
+              }}
+            >
+              Privilegios
+            </Button>
+          </Tooltip>
+          <Tooltip title="Asignar Permisos de Vistas">
+            <Button
+              size="small"
+              startIcon={<VisibilityIcon />}
+              onClick={() => handleAssignViewPermissions(row)}
+              sx={{
+                borderRadius: "8px",
+                textTransform: "none",
+                fontWeight: 500,
+              }}
+            >
+              Vistas
+            </Button>
+          </Tooltip>
+        </Stack>
       ),
     },
   ]
@@ -224,6 +327,15 @@ const Roles = () => {
                 <Chip key={priv.id} label={priv.nombre_privilegio} size="small" color="primary" variant="outlined" />
               ))
             : "—"}
+        </Box>
+      ),
+    },
+    {
+      id: "viewPermissions",
+      label: "Vistas Permitidas",
+      render: (value) => (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+          {value && value.length > 0 ? `${value.length} vistas permitidas` : "Sin acceso a vistas"}
         </Box>
       ),
     },
@@ -286,6 +398,13 @@ const Roles = () => {
         role={selectedRole}
         allPrivileges={privilegios}
         onSave={handleSavePrivilegeAssignment}
+      />
+
+      <RoleViewPermissionAssignment
+        open={viewPermissionAssignmentOpen}
+        onClose={() => setViewPermissionAssignmentOpen(false)}
+        role={selectedRole}
+        onSave={handleSaveViewPermissionAssignment}
       />
     </>
   )
