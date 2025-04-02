@@ -264,7 +264,7 @@ export const GenericList = ({
                 sx={{
                   borderBottom: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e0e0e0',
                   '&:hover': {
-                    backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05) !important' : 'rgba(0, 0, 0, 0.02) !important',
+                    backgroundColor: '#7c9427 !important',
                   }
                 }}
               >
