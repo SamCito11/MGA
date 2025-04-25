@@ -3,8 +3,26 @@ import { GenericList } from '../../../shared/components/GenericList';
 import { DetailModal } from '../../../shared/components/DetailModal';
 import { StatusButton } from '../../../shared/components/StatusButton';
 import { FormModal } from '../../../shared/components/FormModal';
+import { SuccessAlert } from '../../../shared/components/Alert';
 
-const Aulas = () => {
+const Aulas = () => { 
+  // Add columns definition
+  const columns = [
+    { id: 'id', label: 'Número de Aula' },
+    { id: 'capacidad', label: 'Capacidad' },
+    { id: 'ubicacion', label: 'Ubicación' },
+    { 
+      id: 'estado', 
+      label: 'Estado',
+      render: (value, row) => (
+        <StatusButton 
+          active={value} 
+          onClick={() => handleToggleStatus(row.id)}
+        />
+      )
+    }
+  ];
+
   const [aulas, setAulas] = useState([
     { id: 'A01', capacidad: 5, estado: true, ubicacion: 'Edificio Principal, Planta Baja' },
     { id: 'A02', capacidad: 8, estado: true, ubicacion: 'Edificio Principal, Primer Piso' },
@@ -59,6 +77,13 @@ const Aulas = () => {
     }
   ];
 
+  // Add this handler with your other handlers
+  const handleToggleStatus = (aulaId) => {
+    setAulas(prev => prev.map(aula => 
+      aula.id === aulaId ? { ...aula, estado: !aula.estado } : aula
+    ));
+  };
+
   const handleCreate = () => {
     setIsEditing(false);
     setSelectedAula(null);
@@ -94,39 +119,46 @@ const Aulas = () => {
     setIsEditing(false);
   };
 
+  // Add alert state
+  const [alert, setAlert] = useState({
+    open: false,
+    message: ''
+  });
+
+  // Add alert close handler
+  const handleCloseAlert = () => {
+    setAlert({
+      ...alert,
+      open: false
+    });
+  };
+
+  // Modify handleSubmit to include alerts
   const handleSubmit = (formData) => {
+    const aulaData = {
+      ...formData,
+      id: formData.codigo
+    };
+
     if (isEditing) {
       setAulas(prev => prev.map(item => 
-        item.id === selectedAula.id ? { ...formData } : item
+        item.id === selectedAula.id ? aulaData : item
       ));
+      setAlert({
+        open: true,
+        message: 'Aula editada correctamente'
+      });
     } else {
-      setAulas(prev => [...prev, formData]);
+      setAulas(prev => [...prev, aulaData]);
+      setAlert({
+        open: true,
+        message: 'Aula creada correctamente'
+      });
     }
     handleCloseForm();
   };
 
-  const handleToggleStatus = (aulaId) => {
-    setAulas(prev => prev.map(item => 
-      item.id === aulaId ? { ...item, estado: !item.estado } : item
-    ));
-  };
-
-  const columns = [
-    { id: 'id', label: 'Número de Aula' },
-    { id: 'capacidad', label: 'Capacidad', render: (value) => `${value} estudiantes` },
-    { id: 'ubicacion', label: 'Ubicación' },
-    { 
-      id: 'estado', 
-      label: 'Estado',
-      render: (value, row) => (
-        <StatusButton 
-          active={value} 
-          onClick={() => handleToggleStatus(row.id)}
-        />
-      )
-    }
-  ];
-
+  // Add SuccessAlert component to the return statement
   return (
     <>
       <GenericList
@@ -154,6 +186,12 @@ const Aulas = () => {
         open={formModalOpen}
         onClose={handleCloseForm}
         onSubmit={handleSubmit}
+      />
+      
+      <SuccessAlert
+        open={alert.open}
+        message={alert.message}
+        onClose={handleCloseAlert}
       />
     </>
   );

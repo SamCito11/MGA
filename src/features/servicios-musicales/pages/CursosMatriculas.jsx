@@ -45,6 +45,7 @@ const CursosMatriculas = () => {
       duracion: '3 meses',
       capacidad: 15,
       precio: 250000,
+      numeroDeClases: 24,
       estado: true 
     },
     { 
@@ -55,6 +56,7 @@ const CursosMatriculas = () => {
       duracion: '4 meses',
       capacidad: 10,
       precio: 300000,
+      numeroDeClases: 32,
       estado: true 
     },
     { 
@@ -65,6 +67,7 @@ const CursosMatriculas = () => {
       duracion: '6 meses',
       capacidad: 8,
       precio: 350000,
+      numeroDeClases: 48,
       estado: true 
     },
     { 
@@ -75,6 +78,7 @@ const CursosMatriculas = () => {
       duracion: '2 meses',
       capacidad: 12,
       precio: 200000,
+      numeroDeClases: 16,
       estado: true 
     }
   ]);
@@ -256,6 +260,7 @@ const CursosMatriculas = () => {
     { id: 'nombre', label: 'Nombre Curso' },
     { id: 'descripcion', label: 'Información' },
     { id: 'capacidad', label: 'Capacidad' },
+    { id: 'numeroDeClases', label: 'Número de Clases' },
     { id: 'precio', label: 'Precio', render: (value) => `$${value.toLocaleString()}` },
     { 
       id: 'estado', 
@@ -275,6 +280,7 @@ const CursosMatriculas = () => {
     { id: 'descripcion', label: 'Descripción' },
     { id: 'profesor', label: 'Profesor' },
     { id: 'duracion', label: 'Duración' },
+    { id: 'numeroDeClases', label: 'Número de Clases' },
     { id: 'precio', label: 'Precio', render: (value) => `$${value.toLocaleString()}` },
     { id: 'estado', label: 'Estado', render: (value) => <StatusButton active={value} /> }
   ];
@@ -295,6 +301,13 @@ const CursosMatriculas = () => {
     { 
       id: 'capacidad', 
       label: 'Capacidad', 
+      type: 'number',
+      required: true,
+      min: 1
+    },
+    { 
+      id: 'numeroDeClases', 
+      label: 'Número de Clases', 
       type: 'number',
       required: true,
       min: 1

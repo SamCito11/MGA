@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import TeAcuerdasLogo from '../../assets/TeAcuerdas.png';
+"use client";
+
+import { useState, useContext } from "react";
+import { Link } from "react-router-dom";
 import {
   Drawer,
   List,
@@ -8,12 +9,18 @@ import {
   ListItemText,
   ListItemButton,
   Collapse,
-} from '@mui/material';
+  Box,
+  useTheme,
+  useMediaQuery,
+  Tooltip,
+  Toolbar,
+  Typography,
+} from "@mui/material";
+import Navbar from "./Navbar";
 import {
   ExpandLess,
   ExpandMore,
   Dashboard,
-  Security,
   Settings,
   MusicNote,
   ShoppingCart,
@@ -25,69 +32,243 @@ import {
   Class,
   MeetingRoom,
   Payment,
-  AssignmentTurnedIn
-} from '@mui/icons-material';
+  AssignmentTurnedIn,
+} from "@mui/icons-material";
+import { ThemeContext } from "../contexts/ThemeContext";
+import { useAuth } from "../../features/auth/context/AuthContext";
+import { useLocation } from "react-router-dom";
 
 const Navigation = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { darkMode } = useContext(ThemeContext);
+  const { user } = useAuth(); // Obtener el usuario autenticado
+  const location = useLocation();
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const toggleDrawerCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   const [openMenus, setOpenMenus] = useState({});
 
   const handleSubmenuClick = (key) => {
-    setOpenMenus(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    if (isCollapsed) {
+      setIsCollapsed(false);
+      setTimeout(() => {
+        setOpenMenus((prev) => ({
+          ...prev,
+          [key]: true,
+        }));
+      }, 300);
+      return;
+    }
+
+    setOpenMenus((prev) => {
+      if (prev[key]) {
+        return {
+          ...prev,
+          [key]: false,
+        };
+      }
+
+      const newState = {};
+      Object.keys(prev).forEach((menuKey) => {
+        newState[menuKey] = false;
+      });
+
+      return {
+        ...newState,
+        [key]: true,
+      };
+    });
   };
 
+  // Definir los elementos del menú con permisos asociados
   const menuItems = [
     {
-      label: 'Dashboard',
-      path: '/dashboard',
-      icon: <Dashboard />
+      label: "Dashboard",
+      path: "/dashboard",
+      icon: <Dashboard />,
+      permission: "dashboard",
     },
     {
-      label: 'Servicios Musicales',
+      label: "Servicios Musicales",
       icon: <MusicNote />,
       submenu: [
-        { label: 'Profesores', path: '/servicios-musicales/profesores', icon: <People /> },
-        { label: 'Programación de Profesores', path: '/servicios-musicales/programacion-profesores', icon: <Schedule /> },
-        { label: 'Cursos/Matrículas', path: '/servicios-musicales/cursos-matriculas', icon: <School /> },
-        { label: 'Aulas', path: '/servicios-musicales/aulas', icon: <MeetingRoom /> },
-        { label: 'Clases', path: '/servicios-musicales/clases', icon: <Class /> }
-      ]
+        {
+          label: "Profesores",
+          path: "/servicios-musicales/profesores",
+          icon: <People />,
+          permission: "servicios-musicales-profesores",
+        },
+        {
+          label: "Programación de Profesores",
+          path: "/servicios-musicales/programacion-profesores",
+          icon: <Schedule />,
+          permission: "servicios-musicales-programacion-profesores",
+        },
+        {
+          label: "Programación de Clases",
+          path: "/servicios-musicales/programacion-clases",
+          icon: <Schedule />,
+          permission: "servicios-musicales-programacion-clases",
+        },
+        {
+          label: "Cursos/Matrículas",
+          path: "/servicios-musicales/cursos-matriculas",
+          icon: <School />,
+          permission: "servicios-musicales-cursos-matriculas",
+        },
+        {
+          label: "Aulas",
+          path: "/servicios-musicales/aulas",
+          icon: <MeetingRoom />,
+          permission: "servicios-musicales-aulas",
+        },
+        {
+          label: "Clases",
+          path: "/servicios-musicales/clases",
+          icon: <Class />,
+          permission: "servicios-musicales-clases",
+        },
+      ],
     },
     {
-      label: 'Venta de Servicios',
+      label: "Venta de Servicios",
       icon: <ShoppingCart />,
       submenu: [
-        { label: 'Clientes', path: '/venta-servicios/clientes', icon: <People /> },
-        { label: 'Estudiantes', path: '/venta-servicios/estudiantes', icon: <School /> },
-        { label: 'Venta de Matrículas', path: '/venta-servicios/venta-matriculas', icon: <ShoppingCart /> },
-        { label: 'Venta de Cursos', path: '/venta-servicios/venta-cursos', icon: <ShoppingCart /> },
-        { label: 'Pagos', path: '/venta-servicios/pagos', icon: <Payment /> },
-        { label: 'Programación de Clases', path: '/venta-servicios/programacion-clases', icon: <Schedule /> },
-        { label: 'Asistencia', path: '/venta-servicios/asistencia', icon: <AssignmentTurnedIn /> }
-      ]
+        {
+          label: "Clientes",
+          path: "/venta-servicios/clientes",
+          icon: <People />,
+          permission: "venta-servicios-clientes",
+        },
+        {
+          label: "Estudiantes",
+          path: "/venta-servicios/estudiantes",
+          icon: <School />,
+          permission: "venta-servicios-estudiantes",
+        },
+        {
+          label: "Venta de Matrículas",
+          path: "/venta-servicios/venta-matriculas",
+          icon: <ShoppingCart />,
+          permission: "venta-servicios-venta-matriculas",
+        },
+        {
+          label: "Inscripción a un Curso",
+          path: "/venta-servicios/venta-cursos",
+          icon: <ShoppingCart />,
+          permission: "venta-servicios-venta-cursos",
+        },
+        {
+          label: "Pagos",
+          path: "/venta-servicios/pagos",
+          icon: <Payment />,
+          permission: "venta-servicios-pagos",
+        },
+        {
+          label: "Asistencia",
+          path: "/venta-servicios/asistencia",
+          icon: <AssignmentTurnedIn />,
+          permission: "venta-servicios-asistencia",
+        },
+      ],
     },
     {
-      label: 'Configuración',
+      label: "Configuración",
       icon: <Settings />,
       submenu: [
-        { label: 'Roles', path: '/configuracion/roles', icon: <VpnKey /> },
-        { label: 'Usuarios', path: '/configuracion/usuarios', icon: <Person /> },
-        { label: 'Privilegios', path: '/configuracion/privilegios', icon: <Security /> }
-      ]
-    }
+        {
+          label: "Roles",
+          path: "/configuracion/roles",
+          icon: <VpnKey />,
+          permission: "configuracion-roles",
+        },
+        {
+          label: "Usuarios",
+          path: "/configuracion/usuarios",
+          icon: <Person />,
+          permission: "configuracion-usuarios",
+        },
+      ],
+    },
   ];
+
+  // Filtrar los elementos del menú según los permisos del usuario
+  const filterMenuItems = (items) => {
+    return items
+      .filter((item) => {
+        if (item.permission) {
+          return user?.permissions.includes(item.permission) || user?.permissions.includes("*");
+        }
+        return true;
+      })
+      .map((item) => {
+        if (item.submenu) {
+          const filteredSubmenu = filterMenuItems(item.submenu);
+          if (filteredSubmenu.length > 0) {
+            return { ...item, submenu: filteredSubmenu };
+          }
+          return null;
+        }
+        return item;
+      })
+      .filter(Boolean);
+  };
+
+  const filteredMenuItems = filterMenuItems(menuItems);
+
+  const isActive = (path) => location.pathname === path;
 
   const renderMenuItem = (item) => {
     if (item.submenu) {
       return (
         <div key={item.label}>
-          <ListItemButton onClick={() => handleSubmenuClick(item.label)}>
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.label} />
-            {openMenus[item.label] ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
+          <Tooltip title={isCollapsed ? item.label : ""} placement="right" arrow>
+            <ListItemButton
+              onClick={() => handleSubmenuClick(item.label)}
+              sx={{
+                borderRadius: "8px",
+                mb: 0.5,
+                mx: 1,
+                justifyContent: isCollapsed ? "center" : "flex-start",
+                backgroundColor: isActive(item.path) ? "rgba(124, 148, 39, 0.1)" : "transparent",
+                "&:hover": {
+                  backgroundColor: "rgba(124, 148, 39, 0.2)",
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: isCollapsed ? 0 : "40px",
+                  color: "#0455a2",
+                  mr: isCollapsed ? 0 : 2,
+                }}
+              >
+                {item.icon}
+              </ListItemIcon>
+              {!isCollapsed && (
+                <>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      color: darkMode ? "#ffffff" : "#333",
+                    }}
+                  />
+                  {openMenus[item.label] ? <ExpandLess /> : <ExpandMore />}
+                </>
+              )}
+            </ListItemButton>
+          </Tooltip>
           <Collapse in={openMenus[item.label]} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {item.submenu.map((subItem) => (
@@ -95,10 +276,34 @@ const Navigation = () => {
                   key={subItem.path}
                   component={Link}
                   to={subItem.path}
-                  sx={{ pl: 4 }}
+                  sx={{
+                    pl: 4,
+                    py: 0.75,
+                    borderRadius: "8px",
+                    mx: 1,
+                    mb: 0.5,
+                    backgroundColor: isActive(subItem.path) ? "rgba(124, 148, 39, 0.1)" : "transparent",
+                    "&:hover": {
+                      backgroundColor: "rgba(124, 148, 39, 0.2)",
+                    },
+                  }}
                 >
-                  <ListItemIcon>{subItem.icon}</ListItemIcon>
-                  <ListItemText primary={subItem.label} />
+                  <ListItemIcon
+                    sx={{
+                      minWidth: "40px",
+                      color: "#0455a2",
+                    }}
+                  >
+                    {subItem.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={subItem.label}
+                    primaryTypographyProps={{
+                      fontSize: "0.875rem",
+                      fontWeight: 400,
+                      color: darkMode ? "#ffffff" : "#555",
+                    }}
+                  />
                 </ListItemButton>
               ))}
             </List>
@@ -108,111 +313,71 @@ const Navigation = () => {
     }
 
     return (
-      <ListItemButton
-        key={item.path}
-        component={Link}
-        to={item.path}
-      >
-        <ListItemIcon>{item.icon}</ListItemIcon>
-        <ListItemText primary={item.label} />
-      </ListItemButton>
+      <Tooltip title={isCollapsed ? item.label : ""} placement="right" arrow>
+        <ListItemButton
+          key={item.path}
+          component={Link}
+          to={item.path}
+          sx={{
+            borderRadius: "8px",
+            mb: 0.5,
+            mx: 1,
+            justifyContent: isCollapsed ? "center" : "flex-start",
+            backgroundColor: isActive(item.path) ? "rgba(124, 148, 39, 0.1)" : "transparent",
+            "&:hover": {
+              backgroundColor: "rgba(124, 148, 39, 0.2)",
+            },
+          }}
+        >
+          <ListItemIcon
+            sx={{
+              minWidth: isCollapsed ? 0 : "40px",
+              color: "#0455a2",
+              mr: isCollapsed ? 0 : 2,
+            }}
+          >
+            {item.icon}
+          </ListItemIcon>
+          {!isCollapsed && (
+            <ListItemText
+              primary={item.label}
+              primaryTypographyProps={{
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: darkMode ? "#ffffff" : "#333",
+              }}
+            />
+          )}
+        </ListItemButton>
+      </Tooltip>
     );
   };
 
   return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: 280,
-        flexShrink: 0,
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        height: '100%',
-        '& .MuiDrawer-paper': {
-          width: 280,
-          boxSizing: 'border-box',
-          backgroundColor: '#0455a2',
-          color: 'white',
-          position: 'static',
-          '& .MuiListItemIcon-root': {
-            minWidth: '40px',
-            color: 'white !important'
+    <Box sx={{ display: "flex" }}>
+      <Navbar
+        onMenuClick={handleDrawerToggle}
+        isDrawerCollapsed={isCollapsed}
+        toggleDrawerCollapse={toggleDrawerCollapse}
+      />
+      <Drawer
+        variant={isMobile ? "temporary" : "permanent"}
+        open={isMobile ? mobileOpen : true}
+        onClose={handleDrawerToggle}
+        sx={{
+          "& .MuiDrawer-paper": {
+            width: isCollapsed ? 70 : 250,
+            transition: theme.transitions.create("width", {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
           },
-          '& .MuiListItemButton-root': {
-            padding: '12px 24px',
-            color: 'white !important',
-            '& .MuiListItemText-primary': {
-              color: 'white !important'
-            },
-            '&:hover': {
-              backgroundColor: '#6c8221',
-              transition: 'all 0.3s ease',
-              '& .MuiListItemIcon-root, & .MuiListItemText-primary': {
-                color: 'white !important'
-              }
-            }
-          }
-        },
-        '& .MuiPaper-root': {
-          background: 'linear-gradient(180deg, #0455a2 0%, #033b70 100%)',
-          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.12)',
-          '& .MuiListItemText-root': {
-            '& .MuiTypography-root': {
-              fontSize: '0.95rem',
-              fontWeight: 500,
-              color: 'white !important'
-            }
-          }
-        }
-      }}
-    >
-      <List sx={{ pt: 4, pb: 3 }}>
-        <div style={{ 
-          height: '150px',
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          padding: '15px',
-          marginTop: '10px',
-          marginBottom: '20px',
-          backgroundColor: 'white',
-          borderRadius: '50%',
-          width: '150px',
-          margin: '0 auto 30px'
-        }}>
-          <img 
-            src={TeAcuerdasLogo} 
-            alt="Logo" 
-            style={{ 
-              height: '120px',  
-              width: '120px',   
-              objectFit: 'contain',
-              maxWidth: '100%',
-              borderRadius: '50%'
-            }} 
-          />
-        </div>
-        {menuItems.map(renderMenuItem)}
-        <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-          <ListItemButton
-            component={Link}
-            to="/auth"
-            sx={{
-              backgroundColor: '#6c8221',
-              borderRadius: '8px',
-              margin: '0 12px',
-              '&:hover': {
-                backgroundColor: '#7c9427'
-              }
-            }}
-          >
-            <ListItemIcon><Security /></ListItemIcon>
-            <ListItemText primary="Autenticación" />
-          </ListItemButton>
-        </div>
-      </List>
-    </Drawer>
+        }}
+      >
+        <Toolbar />
+        <List>{filteredMenuItems.map(renderMenuItem)}</List>
+      </Drawer>
+    </Box>
   );
 };
 

@@ -1,167 +1,466 @@
-import { useState } from 'react';
-import { Box, Paper, Typography, Button } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
-import { GenericList } from '../../../shared/components/GenericList';
-import { DetailModal } from '../../../shared/components/DetailModal';
-import { FormModal } from '../../../shared/components/FormModal';
+"use client"
+
+import { useState, useEffect } from "react"
+import { Box, Paper, Tabs, Tab, FormControl, Select, MenuItem, InputLabel } from "@mui/material"
+import { GenericList } from "../../../shared/components/GenericList"
+import { DetailModal } from "../../../shared/components/DetailModal"
+import * as XLSX from "xlsx"
+import { StatusButton } from "../../../shared/components/StatusButton"
+import moment from "moment"
 
 const Asistencia = () => {
+  const [tabValue, setTabValue] = useState(0)
+  const [selectedProfesor, setSelectedProfesor] = useState("")
+  const [selectedClase, setSelectedClase] = useState("")
+  const [selectedEstudiante, setSelectedEstudiante] = useState("")
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [selectedAsistencia, setSelectedAsistencia] = useState(null)
+
+  // Mock data - Replace with your actual data structure
+  const profesores = [
+    { id: 1, nombre: "Carlos Rodriguez", clases: ["Guitarra", "Bajo"] },
+    { id: 2, nombre: "Ana Martinez", clases: ["Piano", "Teclado"] },
+    { id: 3, nombre: "Luis Torres", clases: ["Bateria", "Percusion"] },
+    { id: 4, nombre: "Maria Sanchez", clases: ["Violin", "Viola"] },
+    { id: 5, nombre: "Jose Ramirez", clases: ["Saxofon", "Flauta"] },
+  ]
+
+  const estudiantes = [
+    { id: 1, nombre: "Juan Perez", clases: ["Guitarra", "Piano"] },
+    { id: 2, nombre: "Maria Gonzalez", clases: ["Piano"] },
+    { id: 3, nombre: "Pedro Lopez", clases: ["Bateria", "Bajo"] },
+    { id: 4, nombre: "Ana Garcia", clases: ["Violin", "Piano"] },
+    { id: 5, nombre: "Carlos Mendez", clases: ["Saxofon"] },
+    { id: 6, nombre: "Laura Torres", clases: ["Guitarra", "Bajo"] },
+  ]
+
   const [asistencias, setAsistencias] = useState([
+    // Clases de guitarra con Carlos Rodriguez
     {
-      id: 'A001',
-      nombreEstudiante: 'Juan',
-      apellido: 'Pérez',
-      fecha: '2024-01-20',
-      hora: '09:00',
-      profesor: 'Carlos Rodríguez'
+      id: "a001",
+      nombreEstudiante: "Juan",
+      apellidoEstudiante: "Perez",
+      nombreProfesor: "Carlos Rodriguez",
+      clase: "Guitarra",
+      fecha: "2024-01-20",
+      hora: "09:00",
+      estado: "asistio",
     },
     {
-      id: 'A002',
-      nombreEstudiante: 'María',
-      apellido: 'González',
-      fecha: '2024-01-20',
-      hora: '10:30',
-      profesor: 'Ana Martínez'
+      id: "a002",
+      nombreEstudiante: "Laura",
+      apellidoEstudiante: "Torres",
+      nombreProfesor: "Carlos Rodriguez",
+      clase: "Guitarra",
+      fecha: "2024-01-20",
+      hora: "10:30",
+      estado: "asistio",
+    },
+    {
+      id: "a003",
+      nombreEstudiante: "Pedro",
+      apellidoEstudiante: "Lopez",
+      nombreProfesor: "Carlos Rodriguez",
+      clase: "Bajo",
+      fecha: "2024-01-20",
+      hora: "11:30",
+      estado: "falto",
+    },
+    // Clases de piano con Ana Martinez
+    {
+      id: "a004",
+      nombreEstudiante: "Maria",
+      apellidoEstudiante: "Gonzalez",
+      nombreProfesor: "Ana Martinez",
+      clase: "Piano",
+      fecha: "2024-01-21",
+      hora: "09:00",
+      estado: "asistio",
+    },
+    {
+      id: "a005",
+      nombreEstudiante: "Juan",
+      apellidoEstudiante: "Perez",
+      nombreProfesor: "Ana Martinez",
+      clase: "Piano",
+      fecha: "2024-01-21",
+      hora: "10:00",
+      estado: "asistio",
+    },
+    {
+      id: "a006",
+      nombreEstudiante: "Ana",
+      apellidoEstudiante: "Garcia",
+      nombreProfesor: "Ana Martinez",
+      clase: "Piano",
+      fecha: "2024-01-21",
+      hora: "11:00",
+      estado: "falto",
+    },
+    // Clases de batería con Luis Torres
+    {
+      id: "a007",
+      nombreEstudiante: "Pedro",
+      apellidoEstudiante: "Lopez",
+      nombreProfesor: "Luis Torres",
+      clase: "Bateria",
+      fecha: "2024-01-22",
+      hora: "14:00",
+      estado: "asistio",
+    },
+    {
+      id: "a008",
+      nombreEstudiante: "Carlos",
+      apellidoEstudiante: "Mendez",
+      nombreProfesor: "Luis Torres",
+      clase: "Bateria",
+      fecha: "2024-01-22",
+      hora: "15:00",
+      estado: "asistio",
+    },
+    // Clases de violín con Maria Sanchez
+    {
+      id: "a009",
+      nombreEstudiante: "Ana",
+      apellidoEstudiante: "Garcia",
+      nombreProfesor: "Maria Sanchez",
+      clase: "Violin",
+      fecha: "2024-01-23",
+      hora: "09:00",
+      estado: "asistio",
+    },
+    {
+      id: "a010",
+      nombreEstudiante: "Laura",
+      apellidoEstudiante: "Torres",
+      nombreProfesor: "Maria Sanchez",
+      clase: "Viola",
+      fecha: "2024-01-23",
+      hora: "10:00",
+      estado: "falto",
+    },
+    // Clases de saxofón con Jose Ramirez
+    {
+      id: "a011",
+      nombreEstudiante: "Carlos",
+      apellidoEstudiante: "Mendez",
+      nombreProfesor: "Jose Ramirez",
+      clase: "Saxofon",
+      fecha: "2024-01-24",
+      hora: "14:00",
+      estado: "asistio",
+    },
+    {
+      id: "a012",
+      nombreEstudiante: "Maria",
+      apellidoEstudiante: "Gonzalez",
+      nombreProfesor: "Jose Ramirez",
+      clase: "Flauta",
+      fecha: "2024-01-24",
+      hora: "15:00",
+      estado: "asistio",
+    },
+    // Añadiendo más estados para demostrar todos los tipos
+    {
+      id: "a013",
+      nombreEstudiante: "Juan",
+      apellidoEstudiante: "Perez",
+      nombreProfesor: "Carlos Rodriguez",
+      clase: "Guitarra",
+      fecha: "2024-01-25",
+      hora: "09:00",
+      estado: "excusa",
+    },
+    {
+      id: "a014",
+      nombreEstudiante: "Maria",
+      apellidoEstudiante: "Gonzalez",
+      nombreProfesor: "Ana Martinez",
+      clase: "Piano",
+      fecha: "2024-01-25",
+      hora: "10:00",
+      estado: "pospuesta",
+    },
+  ])
+
+  // Función para renderizar el estado con el componente StatusButton
+  const renderEstado = (value) => {
+    return <StatusButton status={value} />
+  }
+
+  // Filtered data based on selections
+  const getFilteredData = () => {
+    switch (tabValue) {
+      case 0: // Por Profesor
+        return selectedProfesor && selectedClase
+          ? asistencias.filter((a) => a.nombreProfesor === selectedProfesor && a.clase === selectedClase)
+          : []
+      case 1: // Por Estudiante
+        return selectedEstudiante
+          ? asistencias.filter((a) => `${a.nombreEstudiante} ${a.apellidoEstudiante}` === selectedEstudiante)
+          : []
+      case 2: // Por Clase
+        return selectedClase ? asistencias.filter((a) => a.clase === selectedClase) : []
+      default:
+        return []
     }
-  ]);
+  }
 
-  const [selectedAsistencia, setSelectedAsistencia] = useState(null);
-  const [isEditingAsistencia, setIsEditingAsistencia] = useState(false);
-  const [asistenciaDetailOpen, setAsistenciaDetailOpen] = useState(false);
-  const [asistenciaFormOpen, setAsistenciaFormOpen] = useState(false);
+  // Columns for each view with proper capitalization and status rendering
+  const asistenciaColumns = [
+    { id: "nombreEstudiante", label: "Estudiante" },
+    { id: "fecha", label: "Fecha" },
+    { id: "hora", label: "Hora" },
+    {
+      id: "estado",
+      label: "Estado",
+      render: renderEstado,
+      filterOptions: [
+        { value: "asistio", label: "Asistió" },
+        { value: "falto", label: "Faltó" },
+        { value: "excusa", label: "Con Excusa" },
+        { value: "pospuesta", label: "Pospuesta" },
+      ],
+    },
+  ]
 
-  // Handlers
-  const handleCreateAsistencia = () => {
-    setIsEditingAsistencia(false);
-    setSelectedAsistencia(null);
-    setAsistenciaFormOpen(true);
-  };
+  const estudianteColumns = [
+    { id: "clase", label: "Clase" },
+    { id: "nombreProfesor", label: "Profesor" },
+    { id: "fecha", label: "Fecha" },
+    { id: "hora", label: "Hora" },
+    {
+      id: "estado",
+      label: "Estado",
+      render: renderEstado,
+      filterOptions: [
+        { value: "asistio", label: "Asistió" },
+        { value: "falto", label: "Faltó" },
+        { value: "excusa", label: "Con Excusa" },
+        { value: "pospuesta", label: "Pospuesta" },
+      ],
+    },
+  ]
 
-  const handleEditAsistencia = (asistencia) => {
-    setIsEditingAsistencia(true);
-    setSelectedAsistencia(asistencia);
-    setAsistenciaFormOpen(true);
-  };
+  const claseColumns = [
+    { id: "nombreEstudiante", label: "Estudiante" },
+    { id: "apellidoEstudiante", label: "Apellido" },
+    { id: "fecha", label: "Fecha" },
+    { id: "hora", label: "Hora" },
+    {
+      id: "estado",
+      label: "Estado",
+      render: renderEstado,
+      filterOptions: [
+        { value: "asistio", label: "Asistió" },
+        { value: "falto", label: "Faltó" },
+        { value: "excusa", label: "Con Excusa" },
+        { value: "pospuesta", label: "Pospuesta" },
+      ],
+    },
+  ]
 
-  const handleDeleteAsistencia = (asistencia) => {
-    const confirmDelete = window.confirm(`¿Está seguro de eliminar la asistencia de ${asistencia.nombreEstudiante} ${asistencia.apellido}?`);
-    if (confirmDelete) {
-      setAsistencias(prev => prev.filter(item => item.id !== asistencia.id));
+  // Función para exportar a Excel
+  const handleExportExcel = () => {
+    const filteredData = getFilteredData()
+    const dataToExport = filteredData.map((item) => ({
+      ...item,
+      fecha: moment(item.fecha).format("DD/MM/YYYY"),
+      hora: moment(item.hora, "HH:mm").format("HH:mm"),
+      estado: getEstadoLabel(item.estado),
+    }))
+
+    const workbook = XLSX.utils.book_new()
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport)
+
+    // Set column widths
+    const wscols = [
+      { wch: 15 }, // ID
+      { wch: 20 }, // Nombre
+      { wch: 20 }, // Apellido
+      { wch: 20 }, // Profesor/Clase
+      { wch: 15 }, // Fecha
+      { wch: 10 }, // Hora
+      { wch: 15 }, // Estado
+    ]
+    worksheet["!cols"] = wscols
+
+    const fileName =
+      tabValue === 0
+        ? "Asistencias_por_Profesor"
+        : tabValue === 1
+          ? "Asistencias_por_Estudiante"
+          : "Asistencias_por_Clase"
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencias")
+    XLSX.writeFile(workbook, `${fileName}.xlsx`)
+  }
+
+  // Función para obtener la etiqueta legible del estado
+  const getEstadoLabel = (estado) => {
+    switch (estado) {
+      case "asistio":
+        return "Asistió"
+      case "falto":
+        return "Faltó"
+      case "excusa":
+        return "Con Excusa"
+      case "pospuesta":
+        return "Pospuesta"
+      default:
+        return estado
     }
-  };
+  }
 
+  // Función para ver detalles de una asistencia
   const handleViewAsistencia = (asistencia) => {
-    setSelectedAsistencia(asistencia);
-    setAsistenciaDetailOpen(true);
-  };
+    setSelectedAsistencia(asistencia)
+    setDetailModalOpen(true)
+  }
 
-  const handleCloseAsistenciaDetail = () => {
-    setAsistenciaDetailOpen(false);
-    setSelectedAsistencia(null);
-  };
-
-  const handleCloseAsistenciaForm = () => {
-    setAsistenciaFormOpen(false);
-    setSelectedAsistencia(null);
-    setIsEditingAsistencia(false);
-  };
-
-  const handleSubmitAsistencia = (formData) => {
-    if (isEditingAsistencia) {
-      setAsistencias(prev => prev.map(item => 
-        item.id === selectedAsistencia.id ? { ...formData, id: item.id } : item
-      ));
-    } else {
-      const newId = `A${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-      setAsistencias(prev => [...prev, { ...formData, id: newId }]);
-    }
-    handleCloseAsistenciaForm();
-  };
-
-  // Column and field definitions
-  const asistenciasColumns = [
-    { id: 'id', label: 'ID' },
-    { id: 'nombreEstudiante', label: 'Nombre Estudiante' },
-    { id: 'apellido', label: 'Apellido' },
-    { id: 'fecha', label: 'Fecha' },
-    { id: 'hora', label: 'Hora' },
-    { id: 'profesor', label: 'Profesor' }
-  ];
-
-  const asistenciasDetailFields = [
-    { id: 'id', label: 'ID' },
-    { id: 'nombreEstudiante', label: 'Nombre Estudiante' },
-    { id: 'apellido', label: 'Apellido' },
-    { id: 'fecha', label: 'Fecha' },
-    { id: 'hora', label: 'Hora' },
-    { id: 'profesor', label: 'Profesor' }
-  ];
-
-  const asistenciasFormFields = [
-    { 
-      id: 'nombreEstudiante', 
-      label: 'Nombre Estudiante', 
-      type: 'text',
-      required: true
+  // Campos para el modal de detalles
+  const detailFields = [
+    { id: "nombreEstudiante", label: "Nombre del Estudiante" },
+    { id: "apellidoEstudiante", label: "Apellido del Estudiante" },
+    { id: "nombreProfesor", label: "Profesor" },
+    { id: "clase", label: "Clase" },
+    { id: "fecha", label: "Fecha" },
+    { id: "hora", label: "Hora" },
+    {
+      id: "estado",
+      label: "Estado",
+      render: renderEstado,
     },
-    { 
-      id: 'apellido', 
-      label: 'Apellido', 
-      type: 'text',
-      required: true
-    },
-    { 
-      id: 'fecha', 
-      label: 'Fecha', 
-      type: 'date',
-      required: true
-    },
-    { 
-      id: 'hora', 
-      label: 'Hora', 
-      type: 'time',
-      required: true
-    },
-    { 
-      id: 'profesor', 
-      label: 'Profesor', 
-      type: 'text',
-      required: true
-    }
-  ];
+  ]
+
+  // Efecto para resetear selecciones al cambiar de tab
+  useEffect(() => {
+    setSelectedProfesor("")
+    setSelectedClase("")
+    setSelectedEstudiante("")
+  }, [tabValue])
 
   return (
-    <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
-      
+    <Box sx={{ height: "calc(100vh - 64px)", display: "flex", flexDirection: "column", gap: 2 }}>
+      <Paper sx={{ p: 2 }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={(e, newValue) => setTabValue(newValue)}
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'capitalize'
+            }
+          }}
+        >
+          <Tab label="Por profesor" />
+          <Tab label="Por estudiante" />
+          <Tab label="Por clase" />
+        </Tabs>
+      </Paper>
+
+      <Paper sx={{ p: 2 }}>
+        {tabValue === 0 && (
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>Profesor</InputLabel>
+              <Select
+                value={selectedProfesor}
+                label="Profesor"
+                onChange={(e) => {
+                  setSelectedProfesor(e.target.value)
+                  setSelectedClase("")
+                }}
+              >
+                {profesores.map((prof) => (
+                  <MenuItem key={prof.id} value={prof.nombre}>
+                    {prof.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {selectedProfesor && (
+              <FormControl fullWidth>
+                <InputLabel>Clase</InputLabel>
+                <Select value={selectedClase} label="Clase" onChange={(e) => setSelectedClase(e.target.value)}>
+                  {profesores
+                    .find((p) => p.nombre === selectedProfesor)
+                    ?.clases.map((clase) => (
+                      <MenuItem key={clase} value={clase}>
+                        {clase}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
+        )}
+
+        {tabValue === 1 && (
+          <FormControl fullWidth>
+            <InputLabel>Estudiante</InputLabel>
+            <Select
+              value={selectedEstudiante}
+              label="Estudiante"
+              onChange={(e) => setSelectedEstudiante(e.target.value)}
+            >
+              {estudiantes.map((est) => (
+                <MenuItem key={est.id} value={`${est.nombre}`}>
+                  {est.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+
+        {tabValue === 2 && (
+          <FormControl fullWidth>
+            <InputLabel>Clase</InputLabel>
+            <Select value={selectedClase} label="Clase" onChange={(e) => setSelectedClase(e.target.value)}>
+              {Array.from(new Set(asistencias.map((a) => a.clase))).map((clase) => (
+                <MenuItem key={clase} value={clase}>
+                  {clase}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+      </Paper>
 
       <GenericList
-        data={asistencias}
-        columns={asistenciasColumns}
-        onEdit={handleEditAsistencia}
-        onDelete={handleDeleteAsistencia}
-        onCreate={handleCreateAsistencia}
+        data={getFilteredData()}
+        columns={tabValue === 0 ? asistenciaColumns : tabValue === 1 ? estudianteColumns : claseColumns}
         onView={handleViewAsistencia}
-        title="Listado de Asistencias"
-      />
-      
-      <DetailModal
-        title={`Detalle de Asistencia: ${selectedAsistencia?.id}`}
-        data={selectedAsistencia}
-        fields={asistenciasDetailFields}
-        open={asistenciaDetailOpen}
-        onClose={handleCloseAsistenciaDetail}
+        title={
+          tabValue === 0
+            ? "Asistencia por Profesor"
+            : tabValue === 1
+              ? "Asistencia por Estudiante"
+              : "Asistencia por Clase"
+        }
+        customFilters={{
+          estado: {
+            options: [
+              { value: "all", label: "Todos" },
+              { value: "asistio", label: "Asistió" },
+              { value: "falto", label: "Faltó" },
+              { value: "excusa", label: "Con Excusa" },
+              { value: "pospuesta", label: "Pospuesta" },
+            ],
+          },
+        }}
       />
 
-      <FormModal
-        title={isEditingAsistencia ? 'Editar Asistencia' : 'Registrar Nueva Asistencia'}
-        fields={asistenciasFormFields}
-        initialData={selectedAsistencia}
-        open={asistenciaFormOpen}
-        onClose={handleCloseAsistenciaForm}
-        onSubmit={handleSubmitAsistencia}
+      {/* Modal de detalles */}
+      <DetailModal
+        title="Detalle de Asistencia"
+        data={selectedAsistencia}
+        fields={detailFields}
+        open={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
       />
     </Box>
-  );
-};
+  )
+}
 
-export default Asistencia;
+export default Asistencia
